@@ -1,0 +1,183 @@
+#include "StereoCalibration.h"
+
+
+
+CStereoCalibration::CStereoCalibration()
+{
+	chessboardSize.width = 9;
+	chessboardSize.height = 6;
+	squareSize = 25;
+}
+
+
+CStereoCalibration::~CStereoCalibration()
+{
+}
+
+vector<vector<Point3f>> CStereoCalibration::calcObjectPoints(int imagesNumber)
+{
+	vector<vector<Point3f>> objectPoints;
+
+	objectPoints.resize(imagesNumber);
+	// zalozenie: wszystkie pola w osi Z = 0; rownolegle do obiektywu
+	for (int i = 0; i < imagesNumber; i++)
+	{
+		for (int j = 0; j < chessboardSize.height; j++)
+		{ 
+			for (int k = 0; k < chessboardSize.width; k++)
+				objectPoints[i].push_back(Point3f(float(k*squareSize), float(j*squareSize), 0));
+		}		
+	}
+
+	return objectPoints;
+}
+
+int CStereoCalibration::getCalibImagePoints(vector<Mat>& frames)
+{
+	bool leftFound, rightFound;
+	vector<Point2f>leftImagePointsBuffer, rightImagePointsBuffer;
+
+	for (int i = 0; i < frames.size(); i++)
+	{
+		leftFound = findChessboardCorners(frames[i], chessboardSize, leftImagePointsBuffer,
+			CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
+		if (leftFound)
+		{
+			rightFound = findChessboardCorners(frames[++i], chessboardSize, rightImagePointsBuffer,
+				CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
+			if (frames[i - 1].size() != frames[i].size())
+				return 0; // ROZNE ROZMIARY OBRAZOW!!!
+			if (rightFound)
+			{
+				leftImagePoints.push_back(leftImagePointsBuffer);
+				leftCalibFrames.push_back(frames[i - 1]);
+				rightImagePoints.push_back(rightImagePointsBuffer);
+				rightCalibFrames.push_back(frames[i]);
+			}
+		}
+		leftImagePointsBuffer.clear();
+		rightImagePointsBuffer.clear();
+	}
+
+	return 1;
+}
+
+int CStereoCalibration::getCalibFrames(VideoCapture& cap, vector<Mat>& outputArrayMat, size_t numberOfFrames, vector<vector<Point2f>>& outputImagePoints)
+{
+	Size boardSize(9, 6);	// ilosc kolumn,wierszy szachownicy
+	int squareSize = 25;	// wymiar rzeczywisty kwadratu/pola szachownicy
+	int chessBoardFlags = CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE;
+
+	Mat frame;
+	vector<Point2f> pointBuffer;
+	bool found;
+
+
+	if (!cap.isOpened())
+		return -1;
+	if (numberOfFrames < 2)
+		return -2;
+
+	while (waitKey(20) == -1 || outputArrayMat.size() < numberOfFrames)	//dodaj timeout
+	{
+		cap >> frame;
+		found = findChessboardCorners(frame, boardSize, pointBuffer, chessBoardFlags);
+		if (found)
+		{
+			drawChessboardCorners(frame, boardSize, Mat(pointBuffer), found);
+			outputArrayMat.push_back(frame);
+			outputImagePoints.push_back(pointBuffer);
+		}
+	}
+
+	return 1;
+}
+
+void CStereoCalibration::loadFrames(vector<Mat>& frames, int flag = IMREAD_GRAYSCALE)
+{
+	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/lewa_1.png", flag));
+	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/prawa_1.png", flag));
+	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/lewa_2.png", flag));
+	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/prawa_2.png", flag));
+	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/lewa_3.png", flag));
+	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/prawa_3.png", flag));
+}
+
+int CStereoCalibration::openCameras(int leftCamID, int rightCamID)
+{
+	leftCam.open(leftCamID);
+	if (!leftCam.isOpened())
+		return 0;
+	rightCam.open(rightCamID);
+	if (!rightCam.isOpened())
+		return 0;
+
+	camsOpened = true;
+	return 1;
+}
+
+int CStereoCalibration::closeCameras()
+{
+	if (leftCam.isOpened())
+		leftCam.release();
+	if (rightCam.isOpened())
+		rightCam.release();
+	camsOpened = false;
+
+	return 1;
+}
+
+void CStereoCalibration::saveSettings(char* path)
+{
+	FileStorage fileStream;
+	time_t actualTime;
+
+	fileStream.open(path, FileStorage::WRITE);
+	time(&actualTime);
+	fileStream << "calibrationDate" << asctime(localtime(&actualTime));
+	fileStream << "leftCameraMat" << leftCameraMat;
+	fileStream << "leftCameraDistorsion" << leftCameraDistorsion;
+	fileStream << "rightCameraMat" << rightCameraMat;
+	fileStream << "rightCameraDistorsion" << rightCameraDistorsion;
+	fileStream << "rotationMat" << rotationMat;
+	fileStream << "translationMat" << translationMat;
+	fileStream << "leftRectificationMat" << leftRectificationMat;
+	fileStream << "leftProjectionMat" << leftProjectionMat;
+	fileStream << "rightRectificationMat" << rightRectificationMat;
+	fileStream << "rightProjectionMat" << rightProjectionMat;
+	fileStream << "disparity2DepthMat" << disparityToDepthMat;
+	fileStream << "leftValidPixROI" << leftValidPixROI;
+	fileStream << "rightValidPixROI" << rightValidPixROI;
+	fileStream << "imageSize" << imageSize;
+	fileStream.release();
+}
+
+int CStereoCalibration::runCalibration()
+{
+	std::vector<Mat> frames;
+
+	loadFrames(frames);
+	getCalibImagePoints(frames);
+	imageSize = leftCalibFrames[0].size();
+	std::cout << "zaladowano i znaleziono obrazy:" << leftCalibFrames.size() << endl;
+	vector<vector<Point3f>> objectPoints;
+	objectPoints = calcObjectPoints(leftCalibFrames.size());
+	std::cout << "obliczono objectPoints" << endl;
+	leftCameraMat = initCameraMatrix2D(objectPoints, leftImagePoints, imageSize, 0);
+	rightCameraMat = initCameraMatrix2D(objectPoints, rightImagePoints, imageSize, 0);
+
+	double rms = stereoCalibrate(objectPoints, leftImagePoints, rightImagePoints,
+		leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion,
+		imageSize, rotationMat, translationMat, essentialMat, fundamentalMat,
+		CALIB_ZERO_TANGENT_DIST +
+		CALIB_SAME_FOCAL_LENGTH,
+		TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 100, 1e-5));
+	std::cout << "przeprowadzono stereoCalibrate" << endl;
+	//CALIB_ZERO_DISPARITY; przetestowac na fladze = 0
+	stereoRectify(leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion,
+		imageSize, rotationMat, translationMat,
+		leftRectificationMat, rightRectificationMat, 
+		leftProjectionMat, rightProjectionMat, disparityToDepthMat, CALIB_ZERO_DISPARITY, -1, imageSize, &leftValidPixROI, &rightValidPixROI);
+	std::cout << "przeprowadzono stereoRectify" << endl;
+	return 1;
+}
