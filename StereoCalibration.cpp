@@ -7,6 +7,7 @@ CStereoCalibration::CStereoCalibration()
 	chessboardSize.width = 9;
 	chessboardSize.height = 6;
 	squareSize = 25;
+	timer = 0;
 }
 
 
@@ -32,7 +33,7 @@ vector<vector<Point3f>> CStereoCalibration::calcObjectPoints(int imagesNumber)
 	return objectPoints;
 }
 
-int CStereoCalibration::getCalibImagePoints(vector<Mat>& frames)
+int CStereoCalibration::getCalibImagePoints(vector<Mat>& frames, bool showFrames = false, int delay = 0)
 {
 	bool leftFound, rightFound;
 	vector<Point2f>leftImagePointsBuffer, rightImagePointsBuffer;
@@ -41,18 +42,26 @@ int CStereoCalibration::getCalibImagePoints(vector<Mat>& frames)
 	{
 		leftFound = findChessboardCorners(frames[i], chessboardSize, leftImagePointsBuffer,
 			CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
-		if (leftFound)
-		{
-			rightFound = findChessboardCorners(frames[++i], chessboardSize, rightImagePointsBuffer,
-				CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
-			if (frames[i - 1].size() != frames[i].size())
+		drawChessboardCorners(frames[i], chessboardSize, leftImagePointsBuffer, leftFound);
+		if (showFrames)
+			showImage("leftCam", frames[i], false);
+		rightFound = findChessboardCorners(frames[++i], chessboardSize, rightImagePointsBuffer,
+			CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FILTER_QUADS);
+		drawChessboardCorners(frames[i], chessboardSize, rightImagePointsBuffer, rightFound);
+		if (showFrames)
+			showImage("rightCam", frames[i], false);
+	
+		if (frames[i - 1].size() != frames[i].size())
 				return 0; // ROZNE ROZMIARY OBRAZOW!!!
-			if (rightFound)
+		if (rightFound && leftFound)
+		{
+			if (timerElapsed() >= delay || timer == 0)
 			{
 				leftImagePoints.push_back(leftImagePointsBuffer);
 				leftCalibFrames.push_back(frames[i - 1]);
 				rightImagePoints.push_back(rightImagePointsBuffer);
 				rightCalibFrames.push_back(frames[i]);
+				timerStart();
 			}
 		}
 		leftImagePointsBuffer.clear();
@@ -61,16 +70,14 @@ int CStereoCalibration::getCalibImagePoints(vector<Mat>& frames)
 
 	return 1;
 }
-
-int CStereoCalibration::getCalibFrames(VideoCapture& cap, vector<Mat>& outputArrayMat, size_t numberOfFrames, vector<vector<Point2f>>& outputImagePoints)
+/*
+int CStereoCalibration::getCalibFrames(vector<Mat>& frames)
 {
-	Size boardSize(9, 6);	// ilosc kolumn,wierszy szachownicy
-	int squareSize = 25;	// wymiar rzeczywisty kwadratu/pola szachownicy
 	int chessBoardFlags = CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE;
 
 	Mat frame;
 	vector<Point2f> pointBuffer;
-	bool found;
+	bool leftFound, rightFound;
 
 
 	if (!cap.isOpened())
@@ -92,7 +99,7 @@ int CStereoCalibration::getCalibFrames(VideoCapture& cap, vector<Mat>& outputArr
 
 	return 1;
 }
-
+*/
 void CStereoCalibration::loadFrames(vector<Mat>& frames, int flag = IMREAD_GRAYSCALE)
 {
 	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/lewa_1.png", flag));
@@ -108,9 +115,11 @@ int CStereoCalibration::openCameras(int leftCamID, int rightCamID)
 	leftCam.open(leftCamID);
 	if (!leftCam.isOpened())
 		return 0;
+	namedWindow("leftCam");
 	rightCam.open(rightCamID);
 	if (!rightCam.isOpened())
 		return 0;
+	namedWindow("rightCam");
 
 	camsOpened = true;
 	return 1;
@@ -152,12 +161,45 @@ void CStereoCalibration::saveSettings(char* path)
 	fileStream.release();
 }
 
+void CStereoCalibration::showImage(Mat image, bool waitForKey)
+{
+	namedWindow("window");
+	imshow("window", image);
+	if (waitForKey)
+		waitKey();
+	destroyWindow("window");
+}
+
+void CStereoCalibration::showImage(char* windowName, Mat image, bool waitForKey)
+{
+	imshow(windowName, image);
+	if (waitForKey)
+		waitKey();
+}
+
 int CStereoCalibration::runCalibration()
 {
-	std::vector<Mat> frames;
 
-	loadFrames(frames);
-	getCalibImagePoints(frames);
+	if (camsOpened)
+	{
+		vector<Mat> frames(2);
+		int samplesRequired = 10;
+
+		while (leftCalibFrames.size() < samplesRequired)
+		{
+			waitKey(1);
+			leftCam >> frames[0];
+			rightCam >> frames[1];
+			getCalibImagePoints(frames, true, 3);
+		}
+	}
+	else
+	{
+		vector<Mat> frames;
+
+		loadFrames(frames);
+		getCalibImagePoints(frames);
+	}
 	imageSize = leftCalibFrames[0].size();
 	std::cout << "zaladowano i znaleziono obrazy:" << leftCalibFrames.size() << endl;
 	vector<vector<Point3f>> objectPoints;

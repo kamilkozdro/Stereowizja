@@ -13,15 +13,21 @@ public:
 	~CStereoCalibration();
 
 	vector<vector<Point3f>> calcObjectPoints(int imagesNumber);
-	int getCalibImagePoints(vector<Mat>& frames);
-	int getCalibFrames(VideoCapture& cap, vector<Mat>& outputArrayMat, size_t numberOfFrames, vector<vector<Point2f>>& outputImagePoints);
+	int getCalibImagePoints(vector<Mat>& frames, bool showFrames, int delay);
+	//int getCalibFrames(VideoCapture& cap, vector<Mat>& outputArrayMat, size_t numberOfFrames, vector<vector<Point2f>>& outputImagePoints);
 	void loadFrames(vector<Mat>& frames, int flag);
 	int openCameras(int leftCamID, int rightCamID);
 	int closeCameras();
 	void saveSettings(char* path);
+	void showImage(Mat image, bool waitForKey);
+	void showImage(char* windowName, Mat image, bool waitForKey);
 	int runCalibration();
 
+	inline void timerStart() { timer = (double)getTickCount(); };
+	inline double timerElapsed() { return ((double)getTickCount() - timer) / getTickFrequency(); };
+
 	bool camsOpened;
+	double timer;
 	VideoCapture leftCam, rightCam;
 	vector<Mat> leftCalibFrames, rightCalibFrames;
 	vector<vector<Point2f>> leftImagePoints, rightImagePoints;

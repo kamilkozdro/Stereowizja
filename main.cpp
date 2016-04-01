@@ -10,7 +10,8 @@ int main()
 	CStereoCalibration calibrate;
 	CStereoVision stereoVision;
 
-
+	if (calibrate.openCameras(1, 2) != 1)
+		return 0;
 	calibrate.runCalibration();
 	calibrate.saveSettings("testKalibracji.yml");
 
