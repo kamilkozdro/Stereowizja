@@ -170,7 +170,7 @@ void CStereoCalibration::showImage(Mat image, bool waitForKey)
 	destroyWindow("window");
 }
 
-void CStereoCalibration::showImage(char* windowName, Mat image, bool waitForKey)
+void CStereoCalibration::showImage(char* windowName, Mat image, bool waitForKey = 0)
 {
 	imshow(windowName, image);
 	if (waitForKey)

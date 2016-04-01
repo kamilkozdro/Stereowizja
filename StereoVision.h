@@ -15,8 +15,10 @@ public:
 	int closeCameras();
 	int grabFrames();
 	int filterFrames_RED(int BGmin,int BGmax, int Rmin);
-	int undistortRectifyFrames(Mat leftFrame, Mat rightFrame);
+	int undistortRectifyFrames(Mat &leftFrame, Mat &rightFrame);
 	void showImage(Mat image, bool waitForKey);
+	void showImage(char* windowName, Mat image, bool waitForKey);
+	void drawParallerLines(Mat &image);
 
 	int status;
 	//String statusText; // przydatne?

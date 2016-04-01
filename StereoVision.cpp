@@ -93,12 +93,12 @@ int CStereoVision::filterFrames_RED(int BGmin = 0, int BGmax = 10, int Rmin = 20
 	return 1;
 }
 
-int CStereoVision::undistortRectifyFrames(Mat leftImage, Mat rightImage)
+int CStereoVision::undistortRectifyFrames(Mat &leftImage, Mat &rightImage)
 {
 	Mat leftMapX, leftMapY, rightMapX, rightMapY;
 	// undystorsje przerzucic do CStereoCalib?
-	initUndistortRectifyMap(leftCameraMat, leftCameraDistorsion, leftRectificationMat, leftProjectionMat, imageSize, CV_16SC2, leftMapX, leftMapY);
-	initUndistortRectifyMap(rightCameraMat, rightCameraDistorsion, rightRectificationMat, rightProjectionMat, imageSize, CV_16SC2, rightMapX, rightMapY);
+	initUndistortRectifyMap(leftCameraMat, leftCameraDistorsion, leftRectificationMat, leftProjectionMat, imageSize, CV_32FC1, leftMapX, leftMapY);
+	initUndistortRectifyMap(rightCameraMat, rightCameraDistorsion, rightRectificationMat, rightProjectionMat, imageSize, CV_32FC1, rightMapX, rightMapY);
 
 	remap(leftImage, leftTransformedFrame, leftMapX, leftMapY, INTER_LINEAR);
 	remap(rightImage, rightTransformedFrame, rightMapX, rightMapY, INTER_LINEAR);
@@ -113,6 +113,23 @@ void CStereoVision::showImage(Mat image, bool waitForKey)
 	if (waitForKey)
 		waitKey();
 	destroyWindow("window");
+}
+
+void CStereoVision::showImage(char* windowName, Mat image, bool waitForKey = 0)
+{
+	imshow(windowName, image);
+	if (waitForKey)
+		waitKey();
+}
+
+void CStereoVision::drawParallerLines(Mat & image)
+{
+	Size imageSize = image.size();
+	
+	for (int i = 0; i < imageSize.height; i+=64)
+	{
+		line(image, Point(0, i), Point(imageSize.width, i), Scalar(0, 255, 0),1);
+	}
 }
 
 /*
