@@ -28,6 +28,7 @@ public:
 
 	bool camsOpened;
 	double timer;
+	double error_rms;
 	VideoCapture leftCam, rightCam;
 	vector<Mat> leftCalibFrames, rightCalibFrames;
 	vector<vector<Point2f>> leftImagePoints, rightImagePoints;

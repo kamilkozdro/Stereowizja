@@ -19,6 +19,8 @@ public:
 	void showImage(Mat image, bool waitForKey);
 	void showImage(char* windowName, Mat image, bool waitForKey);
 	void drawParallerLines(Mat &image);
+	void calcDisparityMap();
+	Mat reproject();
 
 	int status;
 	//String statusText; // przydatne?
@@ -31,6 +33,7 @@ public:
 	Mat leftFrame, rightFrame;
 	Mat leftFilteredFrame, rightFilteredFrame;
 	Mat leftTransformedFrame, rightTransformedFrame;
+	Mat disparityMap;
 	Rect leftValidPixROI, rightValidPixROI;
 	Size imageSize;
 };

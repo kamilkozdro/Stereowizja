@@ -183,7 +183,7 @@ int CStereoCalibration::runCalibration()
 	if (camsOpened)
 	{
 		vector<Mat> frames(2);
-		int samplesRequired = 10;
+		int samplesRequired = 20;
 
 		while (leftCalibFrames.size() < samplesRequired)
 		{
@@ -208,7 +208,7 @@ int CStereoCalibration::runCalibration()
 	leftCameraMat = initCameraMatrix2D(objectPoints, leftImagePoints, imageSize, 0);
 	rightCameraMat = initCameraMatrix2D(objectPoints, rightImagePoints, imageSize, 0);
 
-	double rms = stereoCalibrate(objectPoints, leftImagePoints, rightImagePoints,
+	error_rms = stereoCalibrate(objectPoints, leftImagePoints, rightImagePoints,
 		leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion,
 		imageSize, rotationMat, translationMat, essentialMat, fundamentalMat,
 		CALIB_ZERO_TANGENT_DIST +

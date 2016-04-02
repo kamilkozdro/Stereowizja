@@ -132,20 +132,17 @@ void CStereoVision::drawParallerLines(Mat & image)
 	}
 }
 
-/*
-Mat disparityMap;
-Ptr<StereoBM> bm = StereoBM::create(16, 9);
-bm->setROI1(validPixRect_L);
-bm->setROI2(validPixRect_R);
-bm->setPreFilterCap(31);
-bm->setBlockSize(9);
-bm->setMinDisparity(0);
-bm->setNumDisparities(48);
-bm->setTextureThreshold(10);
-bm->setUniquenessRatio(10);
-bm->setSpeckleWindowSize(100);
-bm->setSpeckleRange(32);
-bm->setDisp12MaxDiff(29);
-bm->compute(rectified_L, rectified_R, disparityMap);
-imshow("result", disparityMap);
-*/
+void CStereoVision::calcDisparityMap()
+{
+	Mat disparityMap;
+	Ptr<StereoSGBM> sgbm = StereoSGBM::create(0, 16, 3, 0, 0, 1, 63, 10, 100, 32, StereoSGBM::MODE_SGBM);
+	sgbm->compute(leftTransformedFrame, rightTransformedFrame, disparityMap);
+}
+
+Mat CStereoVision::reproject()
+{
+	Mat xyz;
+	reprojectImageTo3D(disparityMap, xyz, disparityToDepthMat, false);
+
+	return xyz;
+}
