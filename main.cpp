@@ -24,17 +24,23 @@ int main()
 	namedWindow("rightCam");
 	namedWindow("depth");
 	stereoVision.initStereoVision("testKalibracji.yml", 1, 2);
-	while (waitKey(10) == -1)
+	//while (waitKey(5) == -1)
 	{
-		stereoVision.grabFrames();
+		//stereoVision.leftCam.set(CV_CAP_PROP_EXPOSURE, stereoVision.rightCam.get(CV_CAP_PROP_EXPOSURE));
+		//stereoVision.leftCam.set(CV_CAP_PROP_GAIN, stereoVision.rightCam.get(CV_CAP_PROP_GAIN));
+		//stereoVision.grabFrames();
+		stereoVision.leftFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/left.jpg");
+		stereoVision.rightFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/right.jpg");
 		stereoVision.undistortRectifyFrames(stereoVision.leftFrame, stereoVision.rightFrame);
-		//stereoVision.drawParallerLines(stereoVision.leftFrame);
-		//stereoVision.drawParallerLines(stereoVision.rightFrame);
+		//stereoVision.drawParallerLines(stereoVision.leftTransformedFrame);
+		//stereoVision.drawParallerLines(stereoVision.rightTransformedFrame);
+		imshow("leftCam", stereoVision.leftTransformedFrame);
+		//imshow("rightCam", stereoVision.rightTransformedFrame);
 		stereoVision.calcDisparityMap();
-		depth = stereoVision.reproject();
-		imshow("leftCam", stereoVision.leftFrame);
-		imshow("rightCam", stereoVision.rightFrame);
-		imshow("depth", depth);
+		//std::cout << stereoVision.disparityMap.size() << endl;
+		//depth = stereoVision.reproject();
+		imshow("depth", stereoVision.disparityMap);
+		waitKey();
 	}
 	
 	return 1;

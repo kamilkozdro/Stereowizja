@@ -21,11 +21,13 @@ public:
 	void drawParallerLines(Mat &image);
 	void calcDisparityMap();
 	Mat reproject();
+	void initStereoMatcher();
 
 	int status;
 	//String statusText; // przydatne?
 	bool camsOpened;
 	VideoCapture leftCam, rightCam;
+	Ptr<StereoBM> stereoMatcher;
 	Mat leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion;
 	Mat rotationMat, leftRectificationMat, leftProjectionMat,
 					rightRectificationMat, rightProjectionMat;

@@ -18,7 +18,7 @@ int CStereoVision::initStereoVision(char* path, int leftCamID, int rightCamID)
 		return 0;
 	if (openCameras(leftCamID, rightCamID) != 1)
 		return 0;
-	
+	initStereoMatcher();
 	status = 1;
 	return 1;
 
@@ -134,15 +134,55 @@ void CStereoVision::drawParallerLines(Mat & image)
 
 void CStereoVision::calcDisparityMap()
 {
-	Mat disparityMap;
-	Ptr<StereoSGBM> sgbm = StereoSGBM::create(0, 16, 3, 0, 0, 1, 63, 10, 100, 32, StereoSGBM::MODE_SGBM);
-	sgbm->compute(leftTransformedFrame, rightTransformedFrame, disparityMap);
+	Mat leftMat, rightMat;
+	Mat disparityMat16S = Mat(leftTransformedFrame.rows, leftTransformedFrame.cols, CV_16S);
+	disparityMap = Mat(leftTransformedFrame.rows, leftTransformedFrame.cols, CV_8UC1);
+	double minVal; double maxVal;
+
+	cvtColor(leftTransformedFrame, leftMat, CV_BGR2GRAY);
+	cvtColor(rightTransformedFrame, rightMat, CV_BGR2GRAY);
+	stereoMatcher->compute(leftMat, rightMat, disparityMat16S);
+
+	minMaxLoc(disparityMat16S, &minVal, &maxVal);
+	printf("Min disp: %f Max value: %f \n", minVal, maxVal);
+	disparityMat16S.convertTo(disparityMap, CV_8UC1, 255 / (maxVal - minVal));
 }
 
 Mat CStereoVision::reproject()
 {
-	Mat xyz;
-	reprojectImageTo3D(disparityMap, xyz, disparityToDepthMat, false);
+	Mat depth;
+	reprojectImageTo3D(disparityMap, depth, disparityToDepthMat, false);
 
-	return xyz;
+	return depth;
+}
+
+void CStereoVision::initStereoMatcher()
+{
+	stereoMatcher = StereoBM::create(16 * 5, 21);
+	/*
+	//sbm->SADWindowSize = sadSize;
+	//sbm.numberOfDisparities = 144;//144; 128
+	stereoMatcher->setPreFilterCap(10); //63
+	stereoMatcher->setMinDisparity(0); //-39; 0
+	stereoMatcher->setUniquenessRatio(10);
+	stereoMatcher->setSpeckleWindowSize(100);
+	stereoMatcher->setSpeckleRange(32);
+	stereoMatcher->setDisp12MaxDiff(1);
+	//sbm.fullDP = true;
+	stereoMatcher->setP1(sadSize*sadSize * 4);
+	stereoMatcher->setP2(sadSize*sadSize * 32);
+	*/
+	    
+	//stereoMatcher->setROI1(roi1);
+    //stereoMatcher->setROI2(roi2);
+    stereoMatcher->setPreFilterCap(31);
+    stereoMatcher->setBlockSize(9);
+    stereoMatcher->setMinDisparity(0);
+    stereoMatcher->setNumDisparities(16 * 5);
+    stereoMatcher->setTextureThreshold(10);
+    stereoMatcher->setUniquenessRatio(15);
+    stereoMatcher->setSpeckleWindowSize(100);
+    stereoMatcher->setSpeckleRange(32);
+    stereoMatcher->setDisp12MaxDiff(1);
+	
 }
