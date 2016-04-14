@@ -24,12 +24,18 @@
     <ClCompile Include="StereoCalibration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TCPConnection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StereoVision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StereoCalibration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TCPConnection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

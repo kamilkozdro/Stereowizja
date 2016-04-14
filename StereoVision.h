@@ -1,8 +1,6 @@
 #pragma once
 #include "opencv2\opencv.hpp"
 
-using namespace cv;
-
 class CStereoVision
 {
 public:
@@ -15,28 +13,28 @@ public:
 	int closeCameras();
 	int grabFrames();
 	int filterFrames_RED(int BGmin,int BGmax, int Rmin);
-	int undistortRectifyFrames(Mat &leftFrame, Mat &rightFrame);
-	void showImage(Mat image, bool waitForKey);
-	void showImage(char* windowName, Mat image, bool waitForKey);
-	void drawParallerLines(Mat &image);
+	int undistortRectifyFrames(cv::Mat &leftFrame, cv::Mat &rightFrame);
+	void showImage(cv::Mat image, bool waitForKey);
+	void showImage(char* windowName, cv::Mat image, bool waitForKey);
+	void drawParallerLines(cv::Mat &image);
 	void calcDisparityMap();
-	Mat reproject();
+	cv::Mat reproject();
 	void initStereoMatcher();
 
 	int status;
 	//String statusText; // przydatne?
 	bool camsOpened;
-	VideoCapture leftCam, rightCam;
-	Ptr<StereoBM> stereoMatcher;
-	Mat leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion;
-	Mat rotationMat, leftRectificationMat, leftProjectionMat,
+	cv::VideoCapture leftCam, rightCam;
+	cv::Ptr<cv::StereoBM> stereoMatcher;
+	cv::Mat leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion;
+	cv::Mat rotationMat, leftRectificationMat, leftProjectionMat,
 					rightRectificationMat, rightProjectionMat;
-	Mat disparityToDepthMat;
-	Mat leftFrame, rightFrame;
-	Mat leftFilteredFrame, rightFilteredFrame;
-	Mat leftTransformedFrame, rightTransformedFrame;
-	Mat disparityMap;
-	Rect leftValidPixROI, rightValidPixROI;
-	Size imageSize;
+	cv::Mat disparityToDepthMat;
+	cv::Mat leftFrame, rightFrame;
+	cv::Mat leftFilteredFrame, rightFilteredFrame;
+	cv::Mat leftTransformedFrame, rightTransformedFrame;
+	cv::Mat disparityMap;
+	cv::Rect leftValidPixROI, rightValidPixROI;
+	cv::Size imageSize;
 };
 

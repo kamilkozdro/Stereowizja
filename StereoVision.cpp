@@ -1,5 +1,6 @@
 #include "StereoVision.h"
 
+using namespace cv;
 
 CStereoVision::CStereoVision()
 {
@@ -176,7 +177,7 @@ void CStereoVision::initStereoMatcher()
 	//stereoMatcher->setROI1(roi1);
     //stereoMatcher->setROI2(roi2);
     stereoMatcher->setPreFilterCap(31);
-    stereoMatcher->setBlockSize(9);
+    stereoMatcher->setBlockSize(11);
     stereoMatcher->setMinDisparity(0);
     stereoMatcher->setNumDisparities(16 * 5);
     stereoMatcher->setTextureThreshold(10);

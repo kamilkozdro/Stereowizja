@@ -149,10 +149,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="StereoCalibration.cpp" />
     <ClCompile Include="StereoVision.cpp" />
+    <ClCompile Include="TCPConnection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="StereoCalibration.h" />
     <ClInclude Include="StereoVision.h" />
+    <ClInclude Include="TCPConnection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

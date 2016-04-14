@@ -2,6 +2,7 @@
 #include <opencv2\opencv.hpp>
 #include "StereoCalibration.h"
 #include "StereoVision.h"
+#include "TCPConnection.h"
 
 using namespace cv;
 
@@ -19,18 +20,19 @@ int main()
 	*/
 	
 	CStereoVision stereoVision;
-	Mat depth;
+	CTCPConnection robotConnection;
 	namedWindow("leftCam");
-	namedWindow("rightCam");
+	//namedWindow("rightCam");
 	namedWindow("depth");
+	/*
 	stereoVision.initStereoVision("testKalibracji.yml", 1, 2);
 	//while (waitKey(5) == -1)
 	{
 		//stereoVision.leftCam.set(CV_CAP_PROP_EXPOSURE, stereoVision.rightCam.get(CV_CAP_PROP_EXPOSURE));
 		//stereoVision.leftCam.set(CV_CAP_PROP_GAIN, stereoVision.rightCam.get(CV_CAP_PROP_GAIN));
 		//stereoVision.grabFrames();
-		stereoVision.leftFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/left.jpg");
-		stereoVision.rightFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/right.jpg");
+		stereoVision.leftFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/lewa_punkt.png");
+		stereoVision.rightFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/prawa_punkt.png");
 		stereoVision.undistortRectifyFrames(stereoVision.leftFrame, stereoVision.rightFrame);
 		//stereoVision.drawParallerLines(stereoVision.leftTransformedFrame);
 		//stereoVision.drawParallerLines(stereoVision.rightTransformedFrame);
@@ -42,6 +44,11 @@ int main()
 		imshow("depth", stereoVision.disparityMap);
 		waitKey();
 	}
-	
+	*/
+
+	if (!robotConnection.setupConnection("127.0.0.1", "27015"))
+		return 0;
+	robotConnection.sendData("Heheszki C:\n");
+	robotConnection.closeConnection();
 	return 1;
 }

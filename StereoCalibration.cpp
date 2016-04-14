@@ -1,6 +1,6 @@
 #include "StereoCalibration.h"
 
-
+using namespace cv;
 
 CStereoCalibration::CStereoCalibration()
 {
