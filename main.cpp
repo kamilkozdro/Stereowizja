@@ -4,6 +4,9 @@
 #include "StereoVision.h"
 #include "TCPConnection.h"
 
+#define KAWASAKI_ADDRESS "192.168.0.3"
+#define KAWASAKI_PORT "49152"
+
 using namespace cv;
 
 int main()

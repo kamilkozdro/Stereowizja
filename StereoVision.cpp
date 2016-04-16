@@ -187,3 +187,34 @@ void CStereoVision::initStereoMatcher()
     stereoMatcher->setDisp12MaxDiff(1);
 	
 }
+
+Point CStereoVision::findPoint(Mat& img)
+{
+	int xMin = img.cols, xMax = 0, yMin = img.rows, yMax = 0;
+	uchar* pointer;
+	for (int i = 0; i < img.rows; i++)
+	{
+		pointer = img.ptr(i);
+		for (int j = 0; j < img.cols; j++)
+		{
+			if (pointer[j] == 255)
+			{
+				if (j < xMin)
+					xMin = j;
+				if (j > xMax)
+					xMax = j;
+				if (i < yMin)
+					yMin = i;
+				if (i > yMax)
+					yMax = i;
+			}
+		}
+	}
+
+	if (xMin == xMax)	// jeden punkt odnaleziony
+		return Point2i(xMax, yMax);
+	else if (xMax == 0)	// 0 punktow
+		return Point2i(0, 0);
+	else				// wiele punktow
+		return Point2i(xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+}

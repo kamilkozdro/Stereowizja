@@ -20,6 +20,7 @@ public:
 	void calcDisparityMap();
 	cv::Mat reproject();
 	void initStereoMatcher();
+	cv::Point findPoint(cv::Mat& img);
 
 	int status;
 	//String statusText; // przydatne?
