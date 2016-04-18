@@ -13,7 +13,7 @@ CStereoVision::~CStereoVision()
 
 }
 
-int CStereoVision::initStereoVision(char* path, int leftCamID, int rightCamID)
+int CStereoVision::initStereoVision(char* path, int leftCamID = -1, int rightCamID = -1)
 {
 	if (loadSettings(path) != 1)
 		return 0;
@@ -90,6 +90,20 @@ int CStereoVision::filterFrames_RED(int BGmin = 0, int BGmax = 10, int Rmin = 20
 		return 0;
 	inRange(leftFrame, Scalar(BGmin, BGmin, Rmin), Scalar(BGmax, BGmax, 255), leftFilteredFrame);
 	inRange(rightFrame, Scalar(BGmin, BGmin, Rmin), Scalar(BGmax, BGmax, 255), rightFilteredFrame);
+
+	return 1;
+}
+
+int CStereoVision::filterFrames_BRIGHT()
+{
+	int min1 = 0, min2 = 50, min3 = 173;
+	int max1 = 255, max2 = 147, max3 = 255;
+	Mat leftFrameHSV, rightFrameHSV;
+
+	cvtColor(leftFrame, leftFrameHSV, CV_BGR2HSV);
+	cvtColor(rightFrame, rightFrameHSV, CV_BGR2HSV);
+	inRange(leftFrameHSV, Scalar(min1, min2, min3), Scalar(max1, max2, max3), leftFilteredFrame);
+	inRange(rightFrameHSV, Scalar(min1, min2, min3), Scalar(max1, max2, max3), rightFilteredFrame);
 
 	return 1;
 }
@@ -188,9 +202,9 @@ void CStereoVision::initStereoMatcher()
 	
 }
 
-Point CStereoVision::findPoint(Mat& img)
+Point2f CStereoVision::findPoint(Mat& img)
 {
-	int xMin = img.cols, xMax = 0, yMin = img.rows, yMax = 0;
+	float xMin = img.cols, xMax = 0, yMin = img.rows, yMax = 0;
 	uchar* pointer;
 	for (int i = 0; i < img.rows; i++)
 	{
@@ -212,9 +226,23 @@ Point CStereoVision::findPoint(Mat& img)
 	}
 
 	if (xMin == xMax)	// jeden punkt odnaleziony
-		return Point2i(xMax, yMax);
+		return Point2f(xMax, yMax);
 	else if (xMax == 0)	// 0 punktow
-		return Point2i(0, 0);
-	else				// wiele punktow
-		return Point2i(xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+		return Point2f(0, 0);
+	else				// wiele punktow - blop
+		return Point2f(xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
+}
+
+Mat CStereoVision::triangulate(Mat& leftImg, Mat& rightImg)
+{
+	std::vector<Point2f> leftPoint, rightPoint;
+	Mat point4D = Mat(4, 1, CV_64FC1);
+
+	leftPoint.push_back(findPoint(leftImg));
+	rightPoint.push_back(findPoint(rightImg));
+
+	triangulatePoints(leftProjectionMat, rightProjectionMat,
+		leftPoint, rightPoint, point4D);
+
+	return point4D;
 }

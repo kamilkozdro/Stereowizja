@@ -48,10 +48,19 @@ int main()
 		waitKey();
 	}
 	*/
+	stereoVision.initStereoVision("testKalibracji.yml", 1, 2);
+	stereoVision.leftFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/test_L.jpg");
+	stereoVision.rightFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/test_P.jpg");
+	stereoVision.filterFrames_BRIGHT();
 
+	cout << stereoVision.triangulate(stereoVision.leftFilteredFrame, stereoVision.rightFilteredFrame) << endl;
+	waitKey();
+
+	/*
 	if (!robotConnection.setupConnection("127.0.0.1", "27015"))
 		return 0;
 	robotConnection.sendData("Heheszki C:\n");
 	robotConnection.closeConnection();
+	*/
 	return 1;
 }

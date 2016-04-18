@@ -13,6 +13,7 @@ public:
 	int closeCameras();
 	int grabFrames();
 	int filterFrames_RED(int BGmin,int BGmax, int Rmin);
+	int filterFrames_BRIGHT();
 	int undistortRectifyFrames(cv::Mat &leftFrame, cv::Mat &rightFrame);
 	void showImage(cv::Mat image, bool waitForKey);
 	void showImage(char* windowName, cv::Mat image, bool waitForKey);
@@ -20,7 +21,9 @@ public:
 	void calcDisparityMap();
 	cv::Mat reproject();
 	void initStereoMatcher();
-	cv::Point findPoint(cv::Mat& img);
+	cv::Point2f findPoint(cv::Mat& img);
+	cv::Mat triangulate(cv::Mat& leftImg, cv::Mat& rightImg);
+
 
 	int status;
 	//String statusText; // przydatne?
