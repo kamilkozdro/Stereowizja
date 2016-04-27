@@ -61,6 +61,7 @@ int CStereoCalibration::getCalibImagePoints(vector<Mat>& frames, bool showFrames
 				leftCalibFrames.push_back(frames[i - 1]);
 				rightImagePoints.push_back(rightImagePointsBuffer);
 				rightCalibFrames.push_back(frames[i]);
+				std::cout << "FRAMES: " << leftCalibFrames.size() << endl;
 				timerStart();
 			}
 		}
@@ -183,14 +184,14 @@ int CStereoCalibration::runCalibration()
 	if (camsOpened)
 	{
 		vector<Mat> frames(2);
-		int samplesRequired = 20;
+		int samplesRequired = 30;
 
 		while (leftCalibFrames.size() < samplesRequired)
 		{
-			waitKey(1);
+			waitKey(1);	// PO CO?
 			leftCam >> frames[0];
 			rightCam >> frames[1];
-			getCalibImagePoints(frames, true, 3);
+			getCalibImagePoints(frames, true, 2);
 		}
 	}
 	else
@@ -200,11 +201,10 @@ int CStereoCalibration::runCalibration()
 		loadFrames(frames);
 		getCalibImagePoints(frames);
 	}
+
 	imageSize = leftCalibFrames[0].size();
-	std::cout << "zaladowano i znaleziono obrazy:" << leftCalibFrames.size() << endl;
 	vector<vector<Point3f>> objectPoints;
 	objectPoints = calcObjectPoints(leftCalibFrames.size());
-	std::cout << "obliczono objectPoints" << endl;
 	leftCameraMat = initCameraMatrix2D(objectPoints, leftImagePoints, imageSize, 0);
 	rightCameraMat = initCameraMatrix2D(objectPoints, rightImagePoints, imageSize, 0);
 
@@ -214,12 +214,13 @@ int CStereoCalibration::runCalibration()
 		CALIB_ZERO_TANGENT_DIST +
 		CALIB_SAME_FOCAL_LENGTH,
 		TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 100, 1e-5));
-	std::cout << "przeprowadzono stereoCalibrate" << endl;
 	//CALIB_ZERO_DISPARITY; przetestowac na fladze = 0
 	stereoRectify(leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion,
 		imageSize, rotationMat, translationMat,
 		leftRectificationMat, rightRectificationMat, 
-		leftProjectionMat, rightProjectionMat, disparityToDepthMat, CALIB_ZERO_DISPARITY, -1, imageSize, &leftValidPixROI, &rightValidPixROI);
-	std::cout << "przeprowadzono stereoRectify" << endl;
+		leftProjectionMat, rightProjectionMat, disparityToDepthMat, 0, -1, imageSize, &leftValidPixROI, &rightValidPixROI);
+
+	std::cout << "ZAKONCZONO KALIBRACJE!\nBLAD RMS = "<< error_rms << endl;
+
 	return 1;
 }

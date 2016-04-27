@@ -94,14 +94,14 @@ int CStereoVision::filterFrames_RED(int BGmin = 0, int BGmax = 10, int Rmin = 20
 	return 1;
 }
 
-int CStereoVision::filterFrames_BRIGHT()
+int CStereoVision::filterFrames_BRIGHT(Mat& left, Mat& right)
 {
 	int min1 = 0, min2 = 50, min3 = 173;
 	int max1 = 255, max2 = 147, max3 = 255;
 	Mat leftFrameHSV, rightFrameHSV;
 
-	cvtColor(leftFrame, leftFrameHSV, CV_BGR2HSV);
-	cvtColor(rightFrame, rightFrameHSV, CV_BGR2HSV);
+	cvtColor(left, leftFrameHSV, CV_BGR2HSV);
+	cvtColor(right, rightFrameHSV, CV_BGR2HSV);
 	inRange(leftFrameHSV, Scalar(min1, min2, min3), Scalar(max1, max2, max3), leftFilteredFrame);
 	inRange(rightFrameHSV, Scalar(min1, min2, min3), Scalar(max1, max2, max3), rightFilteredFrame);
 
@@ -205,6 +205,7 @@ void CStereoVision::initStereoMatcher()
 Point2f CStereoVision::findPoint(Mat& img)
 {
 	float xMin = img.cols, xMax = 0, yMin = img.rows, yMax = 0;
+	int counter = 0;
 	uchar* pointer;
 	for (int i = 0; i < img.rows; i++)
 	{
@@ -213,6 +214,7 @@ Point2f CStereoVision::findPoint(Mat& img)
 		{
 			if (pointer[j] == 255)
 			{
+				counter++;
 				if (j < xMin)
 					xMin = j;
 				if (j > xMax)
@@ -224,11 +226,11 @@ Point2f CStereoVision::findPoint(Mat& img)
 			}
 		}
 	}
-
-	if (xMin == xMax)	// jeden punkt odnaleziony
+	//std::cout << "LICZBA PUNKTOW: " << counter << std::endl;
+	if (counter == 1)	// jeden punkt odnaleziony
 		return Point2f(xMax, yMax);
-	else if (xMax == 0)	// 0 punktow
-		return Point2f(0, 0);
+	else if (counter == 0)	// 0 punktow
+		return NULL;
 	else				// wiele punktow - blop
 		return Point2f(xMin + (xMax - xMin) / 2, yMin + (yMax - yMin) / 2);
 }
@@ -236,13 +238,58 @@ Point2f CStereoVision::findPoint(Mat& img)
 Mat CStereoVision::triangulate(Mat& leftImg, Mat& rightImg)
 {
 	std::vector<Point2f> leftPoint, rightPoint;
-	Mat point4D = Mat(4, 1, CV_64FC1);
+	Point2f left, right;
+	Mat point4D = Mat(4, 1, CV_32F);
 
-	leftPoint.push_back(findPoint(leftImg));
-	rightPoint.push_back(findPoint(rightImg));
+	left = findPoint(leftImg);
+	right = findPoint(rightImg);
+	if (left == right)	// czyli brak punktow / (0,0)
+		point4D = Mat::zeros(4, 1, CV_32F);
+	else
+	{
+		leftPoint.push_back(findPoint(leftImg));
+		rightPoint.push_back(findPoint(rightImg));
 
-	triangulatePoints(leftProjectionMat, rightProjectionMat,
-		leftPoint, rightPoint, point4D);
+		triangulatePoints(leftProjectionMat, rightProjectionMat,
+			leftPoint, rightPoint, point4D);
+	}
 
 	return point4D;
+}
+
+Point3f  CStereoVision::coordinateTransform(Point3f point, Point3f trans, Point3f rot)
+{
+	Mat rotXMat = Mat::eye(4, 4, CV_32F);
+	Mat rotYMat = Mat::eye(4, 4, CV_32F);
+	Mat rotZMat = Mat::eye(4, 4, CV_32F);
+	Mat transMat = Mat::eye(4, 4, CV_32F);
+	Mat invRotXMat, invRotYMat, invRotZMat, invTransMat;
+	Mat cameraPoint = Mat(point);
+
+	cameraPoint.resize(4);
+	cameraPoint.at<float>(3, 0) = 1;
+
+	transMat.at<float>(0, 3) = trans.x;
+	transMat.at<float>(1, 3) = trans.y;
+	transMat.at<float>(2, 3) = trans.z;
+
+	rotXMat.at<float>(1, 1) = cos(rot.x * PI / 180);
+	rotXMat.at<float>(1, 2) = -sin(rot.x * PI / 180);
+	rotXMat.at<float>(2, 1) = sin(rot.x * PI / 180);
+	rotXMat.at<float>(2, 2) = cos(rot.x * PI / 180);
+
+	rotYMat.at<float>(0, 0) = cos(rot.y * PI / 180);
+	rotYMat.at<float>(0, 2) = sin(rot.y * PI / 180);
+	rotYMat.at<float>(2, 0) = -sin(rot.y * PI / 180);
+	rotYMat.at<float>(2, 2) = cos(rot.y * PI / 180);
+
+	rotZMat.at<float>(0, 0) = cos(rot.z * PI / 180);
+	rotZMat.at<float>(0, 1) = -sin(rot.z * PI / 180);
+	rotZMat.at<float>(1, 0) = sin(rot.z * PI / 180);
+	rotZMat.at<float>(1, 1) = cos(rot.z * PI / 180);
+
+	Mat result = transMat * rotXMat * rotYMat * rotZMat * cameraPoint;
+	result.resize(3);
+
+	return Point3f(result);
 }
