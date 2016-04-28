@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <opencv2\opencv.hpp>
 #include "StereoCalibration.h"
 #include "StereoVision.h"
@@ -41,12 +42,12 @@ Point3f calcPoint3D(Mat& point4D)
 
 int main()
 {
-	ofstream plik;
-	plik.open("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/stereowizja/pomiary.txt", std::ios::out);
+	//ofstream plik;
+	//plik.open("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/stereowizja/pomiary.txt", std::ios::out);
 	CStereoVision stereoVision;
 	Mat detectedPoint4D;
 	Point3f detectedPoint3D;
-	//CTCPConnection robotConnection;
+	CTCPConnection robotConnection;
 	namedWindow("leftCam");
 	namedWindow("rightCam");
 	//namedWindow("depth");
@@ -67,11 +68,12 @@ int main()
 		//imshow("rightCam", stereoVision.rightFrame);
 		detectedPoint4D = stereoVision.triangulate(stereoVision.leftFilteredFrame, stereoVision.rightFilteredFrame);
 		detectedPoint3D = calcPoint3D(detectedPoint4D);
+		//detectedPoint3D = stereoVision.coordinateTransform();	// punkt w odniesieniu do nowego ukl. wsp.
 		//cout << getPixelValue(detectedPoint4D,1,1) << endl;
 		//cout << detectedPoint4D << endl;
 		//cout << plik.is_open() << endl;
 		
-		saveToFile(plik, detectedPoint3D);
+		//saveToFile(plik, detectedPoint3D);
 		
 		//stereoVision.calcDisparityMap();
 		//std::cout << stereoVision.disparityMap.size() << endl;
@@ -79,7 +81,7 @@ int main()
 		//imshow("depth", stereoVision.disparityMap);
 		//waitKey();
 	}
-	plik.close();
+	//plik.close();
 	/*
 	CStereoCalibration calibrate;
 
@@ -107,7 +109,13 @@ int main()
 	else
 	{
 		cout << "WYSYLAM...\n";
-		robotConnection.sendData("123");
+		std::string dataToSend = std::to_string(detectedPoint3D.x) + ";" +
+			std::to_string(detectedPoint3D.y) + ";" +
+			std::to_string(detectedPoint3D.z);
+		if (robotConnection.sendData(dataToSend.c_str()) != 0)
+		{
+			
+		}
 		robotConnection.closeConnection();
 	}
 	
