@@ -13,10 +13,6 @@ using namespace cv;
 
 float getPixelValue(Mat& img, int x, int y)
 {
-	/*
-	float b = img.data[img.channels()*(img.cols*y + x) + 0];
-	return b;
-	*/
 	float* ptr = img.ptr<float>(x-1);
 	return ptr[y-1];
 }
@@ -34,10 +30,17 @@ void saveToFile(ofstream& file, Point3f& point)
 Point3f calcPoint3D(Mat& point4D)
 {
 	Point3f point3D;
-	float w = getPixelValue(point4D, 4, 1);
-	point3D.x = getPixelValue(point4D, 1, 1) / w;
-	point3D.y = getPixelValue(point4D, 2, 1) / w;
-	point3D.z = getPixelValue(point4D, 3, 1) / w;
+	if (getPixelValue(point4D, 3, 1) == 0)
+		point3D = Point3f(0, 0, 0);
+	else
+	{
+		float w = getPixelValue(point4D, 4, 1);
+		point3D.x = getPixelValue(point4D, 1, 1) / w;
+		point3D.y = getPixelValue(point4D, 2, 1) / w;
+		point3D.z = getPixelValue(point4D, 3, 1) / w;
+	}
+
+	return point3D;
 }
 
 int main()
@@ -49,38 +52,44 @@ int main()
 	Point3f detectedPoint3D;
 	CTCPConnection robotConnection;
 	namedWindow("leftCam");
-	namedWindow("rightCam");
+	//namedWindow("rightCam");
 	//namedWindow("depth");
-	
 	stereoVision.initStereoVision("testKalibracji.yml", 1, 2);
-	while (waitKey(5) == -1)
+
+	if (!robotConnection.setupConnection(KAWASAKI_ADDRESS, KAWASAKI_PORT))
 	{
-		//stereoVision.leftCam.set(CV_CAP_PROP_EXPOSURE, stereoVision.rightCam.get(CV_CAP_PROP_EXPOSURE));
-		//stereoVision.leftCam.set(CV_CAP_PROP_GAIN, stereoVision.rightCam.get(CV_CAP_PROP_GAIN));
+		cout << "NIE NAWIAZANO POLACZENIA\n";
+	}
+
+	while ((waitKey(5) == -1))
+	{
 		stereoVision.grabFrames();
-		//stereoVision.leftFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/lewa_punkt.png");
-		//stereoVision.rightFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/prawa_punkt.png");
 		stereoVision.undistortRectifyFrames(stereoVision.leftFrame, stereoVision.rightFrame);
 		stereoVision.filterFrames_BRIGHT(stereoVision.leftTransformedFrame, stereoVision.rightTransformedFrame);
-		//stereoVision.drawParallerLines(stereoVision.leftTransformedFrame);
-		//stereoVision.drawParallerLines(stereoVision.rightTransformedFrame);
 		imshow("leftCam", stereoVision.leftFrame);
 		//imshow("rightCam", stereoVision.rightFrame);
 		detectedPoint4D = stereoVision.triangulate(stereoVision.leftFilteredFrame, stereoVision.rightFilteredFrame);
 		detectedPoint3D = calcPoint3D(detectedPoint4D);
-		//detectedPoint3D = stereoVision.coordinateTransform();	// punkt w odniesieniu do nowego ukl. wsp.
+		detectedPoint3D = stereoVision.coordinateTransform(detectedPoint3D, Point3f(-1000,-1000,700), Point3f(-135,0,0));	// punkt w odniesieniu do nowego ukl. wsp.
+		if (detectedPoint3D != Point3f(0, 0, 0) && robotConnection.isConnected())
+		{
+			cout << "WYSYLAM...\n";
+			std::string dataToSend = std::to_string(detectedPoint3D.x) + ";" +
+				std::to_string(detectedPoint3D.y) + ";" +
+				std::to_string(detectedPoint3D.z) + ";";
+			if (robotConnection.sendData(dataToSend.c_str()) != 0)
+			{
+				cout << "WYSLANO:\n" << dataToSend.c_str() << endl;
+			}
+			//return 1;
+		}
 		//cout << getPixelValue(detectedPoint4D,1,1) << endl;
-		//cout << detectedPoint4D << endl;
+		cout << detectedPoint3D << endl << endl;
 		//cout << plik.is_open() << endl;
 		
 		//saveToFile(plik, detectedPoint3D);
-		
-		//stereoVision.calcDisparityMap();
-		//std::cout << stereoVision.disparityMap.size() << endl;
-		//depth = stereoVision.reproject();
-		//imshow("depth", stereoVision.disparityMap);
-		//waitKey();
 	}
+	waitKey();
 	//plik.close();
 	/*
 	CStereoCalibration calibrate;
@@ -91,35 +100,6 @@ int main()
 	calibrate.saveSettings("testKalibracji.yml");
 	waitKey();
 	*/
-	/*
-	stereoVision.initStereoVision("testKalibracji.yml", 1, 2);
-	stereoVision.leftFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/test_L.jpg");
-	stereoVision.rightFrame = imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereowizja/obrazy/test_P.jpg");
-	stereoVision.filterFrames_BRIGHT();
 
-	cout << stereoVision.triangulate(stereoVision.leftFilteredFrame, stereoVision.rightFilteredFrame) << endl;
-	waitKey();
-	*/
-	/*
-	waitKey();
-	if (!robotConnection.setupConnection(KAWASAKI_ADDRESS, KAWASAKI_PORT))
-	{
-		cout << "NIE NAWIAZANO POLACZENIA\n";
-	}
-	else
-	{
-		cout << "WYSYLAM...\n";
-		std::string dataToSend = std::to_string(detectedPoint3D.x) + ";" +
-			std::to_string(detectedPoint3D.y) + ";" +
-			std::to_string(detectedPoint3D.z);
-		if (robotConnection.sendData(dataToSend.c_str()) != 0)
-		{
-			
-		}
-		robotConnection.closeConnection();
-	}
-	
-	waitKey();
-	*/
 	return 1;
 }

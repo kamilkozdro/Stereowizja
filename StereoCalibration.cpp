@@ -10,7 +10,6 @@ CStereoCalibration::CStereoCalibration()
 	timer = 0;
 }
 
-
 CStereoCalibration::~CStereoCalibration()
 {
 }
@@ -71,36 +70,7 @@ int CStereoCalibration::getCalibImagePoints(vector<Mat>& frames, bool showFrames
 
 	return 1;
 }
-/*
-int CStereoCalibration::getCalibFrames(vector<Mat>& frames)
-{
-	int chessBoardFlags = CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE;
 
-	Mat frame;
-	vector<Point2f> pointBuffer;
-	bool leftFound, rightFound;
-
-
-	if (!cap.isOpened())
-		return -1;
-	if (numberOfFrames < 2)
-		return -2;
-
-	while (waitKey(20) == -1 || outputArrayMat.size() < numberOfFrames)	//dodaj timeout
-	{
-		cap >> frame;
-		found = findChessboardCorners(frame, boardSize, pointBuffer, chessBoardFlags);
-		if (found)
-		{
-			drawChessboardCorners(frame, boardSize, Mat(pointBuffer), found);
-			outputArrayMat.push_back(frame);
-			outputImagePoints.push_back(pointBuffer);
-		}
-	}
-
-	return 1;
-}
-*/
 void CStereoCalibration::loadFrames(vector<Mat>& frames, int flag = IMREAD_GRAYSCALE)
 {
 	frames.push_back(imread("C:/Users/Hp/Desktop/Air/praca mgr/kamera_kalib/stereo_kalib/obrazy/lewa_1.png", flag));
@@ -162,7 +132,7 @@ void CStereoCalibration::saveSettings(char* path)
 	fileStream.release();
 }
 
-void CStereoCalibration::showImage(Mat image, bool waitForKey)
+void CStereoCalibration::showImage(Mat image, bool waitForKey = false)
 {
 	namedWindow("window");
 	imshow("window", image);
@@ -171,7 +141,7 @@ void CStereoCalibration::showImage(Mat image, bool waitForKey)
 	destroyWindow("window");
 }
 
-void CStereoCalibration::showImage(char* windowName, Mat image, bool waitForKey = 0)
+void CStereoCalibration::showImage(char* windowName, Mat image, bool waitForKey = false)
 {
 	imshow(windowName, image);
 	if (waitForKey)
@@ -214,7 +184,6 @@ int CStereoCalibration::runCalibration()
 		CALIB_ZERO_TANGENT_DIST +
 		CALIB_SAME_FOCAL_LENGTH,
 		TermCriteria(TermCriteria::COUNT + TermCriteria::EPS, 100, 1e-5));
-	//CALIB_ZERO_DISPARITY; przetestowac na fladze = 0
 	stereoRectify(leftCameraMat, leftCameraDistorsion, rightCameraMat, rightCameraDistorsion,
 		imageSize, rotationMat, translationMat,
 		leftRectificationMat, rightRectificationMat, 

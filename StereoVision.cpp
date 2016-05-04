@@ -19,7 +19,6 @@ int CStereoVision::initStereoVision(char* path, int leftCamID = -1, int rightCam
 		return 0;
 	if (openCameras(leftCamID, rightCamID) != 1)
 		return 0;
-	initStereoMatcher();
 	status = 1;
 	return 1;
 
@@ -84,20 +83,10 @@ int CStereoVision::grabFrames()
 	return 1;
 }
 
-int CStereoVision::filterFrames_RED(int BGmin = 0, int BGmax = 10, int Rmin = 200)
-{
-	if (!status)
-		return 0;
-	inRange(leftFrame, Scalar(BGmin, BGmin, Rmin), Scalar(BGmax, BGmax, 255), leftFilteredFrame);
-	inRange(rightFrame, Scalar(BGmin, BGmin, Rmin), Scalar(BGmax, BGmax, 255), rightFilteredFrame);
-
-	return 1;
-}
-
 int CStereoVision::filterFrames_BRIGHT(Mat& left, Mat& right)
 {
-	int min1 = 0, min2 = 50, min3 = 173;
-	int max1 = 255, max2 = 147, max3 = 255;
+	int min1 = 0, min2 = 33, min3 = 70;
+	int max1 = 255, max2 = 201, max3 = 255;
 	Mat leftFrameHSV, rightFrameHSV;
 
 	cvtColor(left, leftFrameHSV, CV_BGR2HSV);
@@ -145,61 +134,6 @@ void CStereoVision::drawParallerLines(Mat & image)
 	{
 		line(image, Point(0, i), Point(imageSize.width, i), Scalar(0, 255, 0),1);
 	}
-}
-
-void CStereoVision::calcDisparityMap()
-{
-	Mat leftMat, rightMat;
-	Mat disparityMat16S = Mat(leftTransformedFrame.rows, leftTransformedFrame.cols, CV_16S);
-	disparityMap = Mat(leftTransformedFrame.rows, leftTransformedFrame.cols, CV_8UC1);
-	double minVal; double maxVal;
-
-	cvtColor(leftTransformedFrame, leftMat, CV_BGR2GRAY);
-	cvtColor(rightTransformedFrame, rightMat, CV_BGR2GRAY);
-	stereoMatcher->compute(leftMat, rightMat, disparityMat16S);
-
-	minMaxLoc(disparityMat16S, &minVal, &maxVal);
-	printf("Min disp: %f Max value: %f \n", minVal, maxVal);
-	disparityMat16S.convertTo(disparityMap, CV_8UC1, 255 / (maxVal - minVal));
-}
-
-Mat CStereoVision::reproject()
-{
-	Mat depth;
-	reprojectImageTo3D(disparityMap, depth, disparityToDepthMat, false);
-
-	return depth;
-}
-
-void CStereoVision::initStereoMatcher()
-{
-	stereoMatcher = StereoBM::create(16 * 5, 21);
-	/*
-	//sbm->SADWindowSize = sadSize;
-	//sbm.numberOfDisparities = 144;//144; 128
-	stereoMatcher->setPreFilterCap(10); //63
-	stereoMatcher->setMinDisparity(0); //-39; 0
-	stereoMatcher->setUniquenessRatio(10);
-	stereoMatcher->setSpeckleWindowSize(100);
-	stereoMatcher->setSpeckleRange(32);
-	stereoMatcher->setDisp12MaxDiff(1);
-	//sbm.fullDP = true;
-	stereoMatcher->setP1(sadSize*sadSize * 4);
-	stereoMatcher->setP2(sadSize*sadSize * 32);
-	*/
-	    
-	//stereoMatcher->setROI1(roi1);
-    //stereoMatcher->setROI2(roi2);
-    stereoMatcher->setPreFilterCap(31);
-    stereoMatcher->setBlockSize(11);
-    stereoMatcher->setMinDisparity(0);
-    stereoMatcher->setNumDisparities(16 * 5);
-    stereoMatcher->setTextureThreshold(10);
-    stereoMatcher->setUniquenessRatio(15);
-    stereoMatcher->setSpeckleWindowSize(100);
-    stereoMatcher->setSpeckleRange(32);
-    stereoMatcher->setDisp12MaxDiff(1);
-	
 }
 
 Point2f CStereoVision::findPoint(Mat& img)
@@ -265,6 +199,9 @@ Point3f  CStereoVision::coordinateTransform(Point3f point, Point3f trans, Point3
 	Mat transMat = Mat::eye(4, 4, CV_32F);
 	Mat invRotXMat, invRotYMat, invRotZMat, invTransMat;
 	Mat cameraPoint = Mat(point);
+
+	if (point == Point3f(0, 0, 0))
+		return Point3f(0, 0, 0);
 
 	cameraPoint.resize(4);
 	cameraPoint.at<float>(3, 0) = 1;

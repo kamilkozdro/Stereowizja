@@ -13,7 +13,6 @@ public:
 
 	vector<vector<cv::Point3f>> calcObjectPoints(int imagesNumber);
 	int getCalibImagePoints(vector<cv::Mat>& frames, bool showFrames, int delay);
-	//int getCalibFrames(VideoCapture& cap, vector<Mat>& outputArrayMat, size_t numberOfFrames, vector<vector<Point2f>>& outputImagePoints);
 	void loadFrames(vector<cv::Mat>& frames, int flag);
 	int openCameras(int leftCamID, int rightCamID);
 	int closeCameras();
